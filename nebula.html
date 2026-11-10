@@ -29,7 +29,7 @@
 
     <div id="instructions">
         <h1>Digital Nebula</h1>
-        <p>Move mouse to rotate & change speed.</p>
+        <p>Move your pointer to rotate & change speed. Touch works too.</p>
     </div>
     <div id="canvas-container"></div>
 
@@ -47,7 +47,9 @@
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
+        // Cap the pixel ratio: uncapped high DPI rendering is costly
+        // for 15,000 particles and rarely looks different above 2.
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
         // 2. CREATE PARTICLE GEOMETRY
@@ -60,6 +62,9 @@
         // Helpers for colors
         const color1 = new THREE.Color(0x00ffff); // Cyan
         const color2 = new THREE.Color(0xff00ff); // Magenta
+        // Reused scratch color: cloning inside the loop would allocate
+        // one new Color object for every one of the 15,000 particles.
+        const mixedColor = new THREE.Color();
 
         for(let i = 0; i < particlesCount * 3; i+=3) {
             // Position: Spread particles in a wide area
@@ -68,7 +73,7 @@
             posArray[i+2] = (Math.random() - 0.5) * 100;   // z
 
             // Color: Mix between Cyan and Magenta based on position
-            const mixedColor = color1.clone().lerp(color2, Math.random());
+            mixedColor.copy(color1).lerp(color2, Math.random());
             colorsArray[i] = mixedColor.r;
             colorsArray[i+1] = mixedColor.g;
             colorsArray[i+2] = mixedColor.b;
@@ -116,18 +121,26 @@
         let targetX = 0;
         let targetY = 0;
 
-        const windowHalfX = window.innerWidth / 2;
-        const windowHalfY = window.innerHeight / 2;
+        // These must stay mutable: they are refreshed on resize below.
+        // As const values captured once at load, the rotation centre
+        // stayed at the old window centre after any resize.
+        let windowHalfX = window.innerWidth / 2;
+        let windowHalfY = window.innerHeight / 2;
 
-        document.addEventListener('mousemove', (event) => {
+        // Pointer events cover mouse, touch and pen with one listener,
+        // so the nebula also responds on touch devices.
+        document.addEventListener('pointermove', (event) => {
             mouseX = (event.clientX - windowHalfX);
             mouseY = (event.clientY - windowHalfY);
         });
 
         window.addEventListener('resize', () => {
+            windowHalfX = window.innerWidth / 2;
+            windowHalfY = window.innerHeight / 2;
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         });
 
         // 6. ANIMATION LOOP
@@ -144,14 +157,7 @@
             particlesMesh.rotation.y += 0.002 + (targetX * 0.05); // Base speed + mouse influence
             particlesMesh.rotation.x += (targetY * 0.05);
 
-            // Wave motion logic
-            // We access the position array directly to manipulate vertices
-            const positions = particlesGeometry.attributes.position.array;
-            
-            // Note: Loops in JS can be heavy. We only animate a subset or use a simple formula for performance.
-            // Here we just gently pulse the whole system or specific movements could go here.
-            
-            // Let's create a gentle "breathing" scale effect based on mouse Y
+            // Gentle "breathing" scale effect
             const scale = 1 + Math.sin(elapsedTime * 0.5) * 0.05;
             particlesMesh.scale.set(scale, scale, scale);
 
