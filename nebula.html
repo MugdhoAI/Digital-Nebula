@@ -143,10 +143,31 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         });
 
+        // Stop the loop while the tab is hidden so it renders nothing
+        // in the background, and restart it when the tab is visible again.
+        document.addEventListener('visibilitychange', () => {
+            hiddenPaused = document.hidden;
+            if (!hiddenPaused) startAnimation();
+        });
+
         // 6. ANIMATION LOOP
         const clock = new THREE.Clock();
 
+        // Pausing has two independent causes: the user asked for it, or
+        // the tab is hidden. The loop only runs when neither applies.
+        let paused = false;
+        let hiddenPaused = false;
+
+        function isRunning() {
+            return !paused && !hiddenPaused;
+        }
+
+        function startAnimation() {
+            if (isRunning()) animate();
+        }
+
         function animate() {
+            if (!isRunning()) return;
             requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
 
