@@ -23,6 +23,16 @@
             pointer-events: none;
             user-select: none;
         }
+        #instructions button {
+            pointer-events: auto;
+            cursor: pointer;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -30,6 +40,9 @@
     <div id="instructions">
         <h1>Digital Nebula</h1>
         <p>Move your pointer to rotate & change speed. Touch works too.</p>
+        <p>Arrow keys nudge the spin, Space pauses.</p>
+        <p id="particle-count">15,000 particles</p>
+        <button id="pause-button" type="button">Pause</button>
     </div>
     <div id="canvas-container"></div>
 
@@ -171,6 +184,8 @@
             if (event.code === 'ArrowUp') keyY = Math.max(-KEY_LIMIT, keyY - KEY_STEP);
             if (event.code === 'ArrowDown') keyY = Math.min(KEY_LIMIT, keyY + KEY_STEP);
         });
+
+        document.getElementById('pause-button').addEventListener('click', togglePause);
 
         window.addEventListener('resize', () => {
             windowHalfX = window.innerWidth / 2;
