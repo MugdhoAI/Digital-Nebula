@@ -134,6 +134,37 @@
             mouseY = (event.clientY - windowHalfY);
         });
 
+        // Arrow keys nudge the rotation speed, Space pauses and resumes.
+        // The key offset is clamped so repeated presses cannot spin the
+        // nebula faster than the pointer ever could.
+        let keyX = 0;
+        let keyY = 0;
+        const KEY_STEP = 40;
+        const KEY_LIMIT = 400;
+
+        function updatePauseButton() {
+            const pauseButton = document.getElementById('pause-button');
+            if (pauseButton) pauseButton.textContent = paused ? 'Resume' : 'Pause';
+        }
+
+        function togglePause() {
+            paused = !paused;
+            updatePauseButton();
+            startAnimation();
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                togglePause();
+                return;
+            }
+            if (event.code === 'ArrowLeft') keyX = Math.max(-KEY_LIMIT, keyX - KEY_STEP);
+            if (event.code === 'ArrowRight') keyX = Math.min(KEY_LIMIT, keyX + KEY_STEP);
+            if (event.code === 'ArrowUp') keyY = Math.max(-KEY_LIMIT, keyY - KEY_STEP);
+            if (event.code === 'ArrowDown') keyY = Math.min(KEY_LIMIT, keyY + KEY_STEP);
+        });
+
         window.addEventListener('resize', () => {
             windowHalfX = window.innerWidth / 2;
             windowHalfY = window.innerHeight / 2;
@@ -171,8 +202,8 @@
             requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
 
-            targetX = mouseX * 0.001;
-            targetY = mouseY * 0.001;
+            targetX = (mouseX + keyX) * 0.001;
+            targetY = (mouseY + keyY) * 0.001;
 
             // Rotation interaction with easing
             particlesMesh.rotation.y += 0.002 + (targetX * 0.05); // Base speed + mouse influence
