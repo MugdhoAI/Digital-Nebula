@@ -134,6 +134,13 @@
             mouseY = (event.clientY - windowHalfY);
         });
 
+        // When the pointer leaves the window the rotation eases back to
+        // its base speed instead of spinning at the last offset forever.
+        document.addEventListener('pointerleave', () => {
+            mouseX = 0;
+            mouseY = 0;
+        });
+
         // Arrow keys nudge the rotation speed, Space pauses and resumes.
         // The key offset is clamped so repeated presses cannot spin the
         // nebula faster than the pointer ever could.
