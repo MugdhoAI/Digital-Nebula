@@ -1,0 +1,1 @@
+{"description":"Interactive 3D particle visualization with Three.js","name":"digital-nebula","private":true,"scripts":{"test":"node --test tests/smoke.test.mjs"},"version":"1.0.0"}
