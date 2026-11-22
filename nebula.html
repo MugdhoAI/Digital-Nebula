@@ -210,18 +210,29 @@
         // the tab is hidden. The loop only runs when neither applies.
         let paused = false;
         let hiddenPaused = false;
+        // Id of the pending animation frame, or null when no frame is
+        // pending. Browsers keep a frame queued while the tab is hidden,
+        // so without this guard the visibility restart below would start
+        // a second loop alongside the surviving pre-hide frame and the
+        // nebula would speed up after every tab switch.
+        let animationFrameId = null;
 
         function isRunning() {
             return !paused && !hiddenPaused;
         }
 
         function startAnimation() {
-            if (isRunning()) animate();
+            if (!isRunning()) return;
+            if (animationFrameId !== null) return;
+            animate();
         }
 
         function animate() {
-            if (!isRunning()) return;
-            requestAnimationFrame(animate);
+            if (!isRunning()) {
+                animationFrameId = null;
+                return;
+            }
+            animationFrameId = requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
 
             targetX = (mouseX + keyX) * 0.001;
@@ -238,7 +249,7 @@
             renderer.render(scene, camera);
         }
 
-        animate();
+        startAnimation();
     </script>
 </body>
 </html>
